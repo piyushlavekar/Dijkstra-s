@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import citiesInMaharashtra from './data'; // Assuming you have a data file with city information
 import './App.css';
 import Spinner from './components/Spinner'; // Import the Spinner component
+import logo from './logo.png'; // Replace with the correct path to your logo
 
 function App() {
   const [startCity, setStartCity] = useState('');
@@ -16,6 +17,7 @@ function App() {
   const [distance, setDistance] = useState(0);
   const [isNightMode, setIsNightMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isMapVisible, setIsMapVisible] = useState(true); // State for map visibility
 
   // Show a toast message when the app loads
   useEffect(() => {
@@ -162,17 +164,26 @@ function App() {
     return [southWest, northEast];
   };
 
+  // Toggle map visibility
+  const toggleMapVisibility = () => {
+    setIsMapVisible(!isMapVisible);
+  };
+
   return (
     <div className="relative h-screen w-screen overflow-hidden">
-      {/* Main Content with transparency adjustment */}
       <div
         className={`relative h-full w-full flex flex-col items-center justify-center transition duration-500 ease-in-out ${
           isNightMode ? 'bg-gray-800 bg-opacity-70 text-white' : 'bg-white bg-opacity-60 text-black'
         } px-4`}
       >
         <ToastContainer />
+        <img 
+          src={logo} 
+          alt="Logo" 
+          className="rounded-full h-20 w-20 mb-4 transition duration-500 ease-in-out" 
+        />
         <h1 className="text-5xl md:text-6xl font-bold mb-6 text-center transition duration-1000 ease-in-out transform hover:scale-110">
-          Welcome To Lv Groups
+          Welcome To LV Groups
         </h1>
 
         <h2 className="text-3xl md:text-4xl font-semibold mb-6 text-center p-4 bg-blue-600 bg-opacity-80 text-white rounded-lg shadow-lg transform transition duration-700 hover:scale-105">
@@ -180,9 +191,7 @@ function App() {
         </h2>
 
         <button
-          className={`mb-6 py-2 px-4 rounded ${
-            isNightMode ? 'bg-yellow-500' : 'bg-blue-600'
-          } text-white hover:bg-opacity-80 transition duration-300`}
+          className={`mb-6 py-2 px-4 rounded ${isNightMode ? 'bg-yellow-500' : 'bg-blue-600'} text-white hover:bg-opacity-80 transition duration-300`}
           onClick={toggleTheme}
         >
           Toggle {isNightMode ? 'Day' : 'Night'} Mode
@@ -191,9 +200,7 @@ function App() {
         <div className="flex flex-col items-center mb-6 space-y-4 w-full max-w-2xl">
           <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 w-full">
             <select
-              className={`border border-gray-300 rounded p-3 text-lg transition duration-500 ease-in-out ${
-                isNightMode ? 'bg-gray-700 text-white' : 'bg-white text-black'
-              } hover:bg-gray-400 focus:ring focus:ring-blue-300 flex-1`}
+              className={`border border-gray-300 rounded p-3 text-lg transition duration-500 ease-in-out ${isNightMode ? 'bg-gray-700 text-white' : 'bg-white text-black'} hover:bg-gray-400 focus:ring focus:ring-blue-300 flex-1`}
               onChange={(e) => {
                 const selected = citiesInMaharashtra.find(city => city.name === e.target.value);
                 setStartCity(selected || '');
@@ -212,9 +219,7 @@ function App() {
             </select>
 
             <select
-              className={`border border-gray-300 rounded p-3 text-lg transition duration-500 ease-in-out ${
-                isNightMode ? 'bg-gray-700 text-white' : 'bg-white text-black'
-              } hover:bg-gray-400 focus:ring focus:ring-blue-300 flex-1`}
+              className={`border border-gray-300 rounded p-3 text-lg transition duration-500 ease-in-out ${isNightMode ? 'bg-gray-700 text-white' : 'bg-white text-black'} hover:bg-gray-400 focus:ring focus:ring-blue-300 flex-1`}
               onChange={(e) => {
                 const selected = citiesInMaharashtra.find(city => city.name === e.target.value);
                 setEndCity(selected || '');
@@ -234,43 +239,60 @@ function App() {
           </div>
 
           <button
-            className={`mt-4 py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700 transition duration-300`}
+            className={`mb-6 py-2 px-4 rounded bg-green-600 text-white hover:bg-opacity-80 transition duration-300`}
             onClick={handleCalculateRoute}
           >
             Calculate Route
           </button>
         </div>
 
-        {loading && <Spinner />} {/* Show loading spinner while fetching route */}
+        {/* Close Map button */}
+        <button
+          className={`mb-4 py-2 px-4 rounded bg-red-600 text-white hover:bg-opacity-80 transition duration-300`}
+          onClick={toggleMapVisibility}
+        >
+          {isMapVisible ? 'Close Map' : 'Show Map'}
+        </button>
 
-        {route && (
-          <MapContainer
-            center={[route[0][1], route[0][0]]}
-            zoom={8}
-            className="h-1/2 w-full"
-          >
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            />
-            <Polyline positions={route.map(coord => [coord[1], coord[0]])} color="blue" />
-            {nearestCity && (
-              <Marker position={[nearestCity.lat, nearestCity.lon]}>
-                <Popup>{nearestCity.name}</Popup>
-              </Marker>
-            )}
-            <Marker position={[startCity.lat, startCity.lon]}>
-              <Popup>{startCity.name}</Popup>
-            </Marker>
-            <Marker position={[endCity.lat, endCity.lon]}>
-              <Popup>{endCity.name}</Popup>
-            </Marker>
-          </MapContainer>
+        {loading && <Spinner />}
+
+        {isMapVisible && (
+          <div className="w-full h-96">
+            <MapContainer
+              center={[19.6633, 75.32]} // Default center of Maharashtra
+              zoom={7}
+              className="h-full w-full"
+            >
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+              />
+              {route && (
+                <Polyline positions={route.map(coord => [coord[1], coord[0]])} color="blue" />
+              )}
+              {startCity && (
+                <Marker position={[startCity.lat, startCity.lon]}>
+                  <Popup>{startCity.name}</Popup>
+                </Marker>
+              )}
+              {endCity && (
+                <Marker position={[endCity.lat, endCity.lon]}>
+                  <Popup>{endCity.name}</Popup>
+                </Marker>
+              )}
+              {nearestCity && (
+                <Marker position={[nearestCity.lat, nearestCity.lon]} icon={new L.Icon({ iconUrl: 'path/to/icon.png' })}>
+                  <Popup>Nearest City: {nearestCity.name}</Popup>
+                </Marker>
+              )}
+            </MapContainer>
+          </div>
         )}
+
         {distance > 0 && (
-          <p className="text-lg font-semibold mt-4">
+          <h2 className="text-2xl font-semibold mt-6">
             Distance: {distance} km
-          </p>
+          </h2>
         )}
       </div>
     </div>
