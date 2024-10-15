@@ -1,21 +1,21 @@
-// App.jsx
 import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Polyline, Marker } from "react-leaflet";
+import { MapContainer, TileLayer, Polyline, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import OpenRouteService from "openrouteservice-js";
-import { Toaster, toast } from "react-hot-toast"; // Update the import
+import { Toaster, toast } from "react-hot-toast";
 import citiesInMaharashtra from "./Data/data"; // Assuming you have a data file with city information
 import "./App.css";
 import Spinner from "./components/Spinner"; // Import the Spinner component
-import logo from "./logo.png"; // Replace with the correct path to your logo
+import logo from "./images/logo.png"; // Replace with the correct path to your logo
 import NearestCityFinder from "./components/NearestCityFinder"; // Import the NearestCityFinder
-import { FaSun, FaMoon } from "react-icons/fa"; // Import theme icons
-import { FaMapMarkerAlt, FaRoute, FaEye, FaEyeSlash } from "react-icons/fa"; // Import additional icons
+import { FaSun, FaMoon, FaMapMarkerAlt, FaRoute, FaEye, FaEyeSlash } from "react-icons/fa"; // Import icons
+import gpsIcon from './images/gps.png'; // Import the GPS icon
+import L from 'leaflet'; // Import Leaflet
 
 function App() {
   const { findNearestCity } = NearestCityFinder(); // Use the NearestCityFinder
-  const [startCity, setStartCity] = useState("");
-  const [endCity, setEndCity] = useState("");
+  const [startCity, setStartCity] = useState(null); // Initialize as null
+  const [endCity, setEndCity] = useState(null); // Initialize as null
   const [route, setRoute] = useState(null);
   const [nearestCity, setNearestCity] = useState(null);
   const [distance, setDistance] = useState(0);
@@ -32,10 +32,11 @@ function App() {
       }
     );
 
-    return () => {  
+    return () => {
       toast.dismiss(toastId); // Cleanup to dismiss the toast if needed
     };
   }, []);
+
   const handleCalculateRoute = () => {
     if (!startCity || !endCity) {
       alert("Please select both start and end cities.");
@@ -84,7 +85,11 @@ function App() {
               });
             } else {
               console.warn("No route geometry found.");
-              // Call function to find nearest city
+              const nearest = findNearestCity(startCity);
+              if (nearest) {
+                setNearestCity(nearest);
+                toast.error(`No route found. Nearest city is ${nearest.name}.`);
+              }
             }
           }
         }
@@ -106,14 +111,6 @@ function App() {
     setIsMapVisible(!isMapVisible); // Toggle map visibility
   };
 
-  const calculateBounds = (route) => {
-    const lats = route.map((coord) => coord[1]);
-    const lons = route.map((coord) => coord[0]);
-    const southWest = [Math.min(...lats), Math.min(...lons)];
-    const northEast = [Math.max(...lats), Math.max(...lons)];
-    return [southWest, northEast];
-  };
-
   return (
     <div
       className={`relative h-screen w-screen overflow-hidden ${
@@ -127,20 +124,24 @@ function App() {
             : "bg-white bg-opacity-60 text-black"
         } px-4`}
       >
-        <Toaster position="top-center" />{" "}
-        {/* Position of the toast notifications */}
+        <Toaster position="top-center" />
         <img
           src={logo}
           alt="Logo"
-          className="rounded-full h-20 w-20 mb-4 transition duration-500 ease-in-out"
+          className={`rounded-full h-20 w-20 mb-4 transition-transform duration-500 ease-in-out transform hover:scale-110 ${
+            isNightMode
+              ? "shadow-white shadow-lg"
+              : "shadow-black shadow-lg"
+          }`}
         />
+
         <h1 className="heading text-5xl md:text-6xl font-bold mb-6 text-center transition duration-1000 ease-in-out transform hover:scale-110">
           Welcome To <span className="text-yellow-500">LV Groups</span>
         </h1>
         <h2 className="text-3xl md:text-4xl font-semibold mb-6 text-center transition duration-700 ease-in-out transform hover:scale-105">
-          Discover the Shortest Routes in Maharashtra
+          Discover the  Routes in Maharashtra
         </h2>
-        {/* Theme Changer Button positioned to the right */}
+
         <button
           className={`absolute top-5 right-5 p-2 rounded ${
             isNightMode ? "bg-yellow-500" : "bg-blue-600"
@@ -159,9 +160,10 @@ function App() {
                 const selected = citiesInMaharashtra.find(
                   (city) => city.name === e.target.value
                 );
-                setStartCity(selected || "");
+                console.log("Selected Start City:", selected); // Debugging log
+                setStartCity(selected || null); // Set to null if not found
               }}
-              value={startCity.name || ""}
+              value={startCity ? startCity.name : ""}
             >
               <option value="">Select Start City</option>
               {citiesInMaharashtra.map((city) => (
@@ -179,9 +181,10 @@ function App() {
                 const selected = citiesInMaharashtra.find(
                   (city) => city.name === e.target.value
                 );
-                setEndCity(selected || "");
+                console.log("Selected End City:", selected); // Debugging log
+                setEndCity(selected || null); // Set to null if not found
               }}
-              value={endCity.name || ""}
+              value={endCity ? endCity.name : ""}
             >
               <option value="">Select End City</option>
               {citiesInMaharashtra.map((city) => (
@@ -192,7 +195,6 @@ function App() {
             </select>
           </div>
 
-          {/* Calculate Route Button with Icon */}
           <button
             className={`mt-4 flex items-center justify-center bg-blue-600 text-white rounded p-3 transition duration-300 hover:bg-blue-700`}
             onClick={handleCalculateRoute}
@@ -201,9 +203,8 @@ function App() {
             Calculate Route
           </button>
 
-          {/* Toggle Map Visibility Button with Icon */}
           <button
-            className={`mt-4 flex items-center justify-center bg-red-600 text-white rounded p-3 transition duration-300 hover:bg-red-700`}
+            className={`mt-4 flex items-center justify-center bg-blue-600 text-white rounded p-3 transition duration-300 hover:bg-blue-700`}
             onClick={toggleMapVisibility}
           >
             {isMapVisible ? (
@@ -214,41 +215,63 @@ function App() {
             {isMapVisible ? "Hide Map" : "Show Map"}
           </button>
         </div>
-        {loading && <Spinner />}
-        {route && (
-          <div className="mt-6 text-lg">
-            <p>Distance: {distance} km</p>
-          </div>
-        )}
-        {/* Map component */}
-        {isMapVisible && (
-          <MapContainer
-            center={[20.5937, 78.9629]}
-            zoom={5}
-            className="h-full w-full"
-          >
-            {isNightMode ? (
-              <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-              />
-            ) : (
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              />
-            )}
 
+        {loading && <Spinner />}
+
+        {isMapVisible && (
+          <MapContainer center={[20.5937, 78.9629]} zoom={6} className="w-full h-full">
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
             {route && (
               <Polyline
-                positions={route.map((coord) => [coord[1], coord[0]])}
-                color="blue"
+                pathOptions={{ color: "blue" }}
+                positions={route.map(([lon, lat]) => [lat, lon])} // Adjust for Leaflet coordinates
               />
             )}
 
-            {startCity && <Marker position={[startCity.lat, startCity.lon]} />}
-            {endCity && <Marker position={[endCity.lat, endCity.lon]} />}
+            {startCity && (
+              <Marker
+                position={[startCity.lat, startCity.lon]}
+                icon={L.icon({ iconUrl: gpsIcon, iconSize: [25, 41], iconAnchor: [12, 41] })}
+              >
+                <Popup>{startCity.name}</Popup>
+              </Marker>
+            )}
+
+            {endCity && (
+              <Marker
+                position={[endCity.lat, endCity.lon]}
+                icon={L.icon({ iconUrl: gpsIcon, iconSize: [25, 41], iconAnchor: [12, 41] })}
+              >
+                <Popup>{endCity.name}</Popup>
+              </Marker>
+            )}
+
+            {nearestCity && (
+              <Marker
+                position={[nearestCity.lat, nearestCity.lon]}
+                icon={L.icon({ iconUrl: gpsIcon, iconSize: [25, 41], iconAnchor: [12, 41] })}
+              >
+                <Popup>{nearestCity.name}</Popup>
+              </Marker>
+            )}
           </MapContainer>
+        )}
+
+        {nearestCity && (
+          <div className="mt-4">
+            <h3 className="text-xl">Nearest City: {nearestCity.name}</h3>
+          </div>
+        )}
+
+        {distance > 0 && (
+          <div className="mt-4">
+            <h3 className="text-xl">
+              Distance: {distance} km
+            </h3>
+          </div>
         )}
       </div>
     </div>
@@ -256,6 +279,3 @@ function App() {
 }
 
 export default App;
-
-
-
