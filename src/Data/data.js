@@ -14,7 +14,7 @@ const citiesInMaharashtra = [
   { name: 'Dhule', lat: 20.8994, lon: 74.7778 },
   { name: 'Nandurbar', lat: 21.2500, lon: 74.2500 },
   { name: 'Jalgaon', lat: 21.0054, lon: 75.5699 },
-  { name: 'Ahilya Nagar (Ahmednagar)', lat: 19.0956, lon: 74.7388 },
+  { name: 'Ahilya Nagar', lat: 19.0956, lon: 74.7388 },
 
   // Pune Division
   { name: 'Pune', lat: 18.5204, lon: 73.8567 },
@@ -52,10 +52,18 @@ const citiesInMaharashtra = [
   { name: 'Akola', lat: 20.7062, lon: 77.0000 },
   { name: 'Kalyan-Dombivli', lat: 19.2183, lon: 73.1644 },
   { name: 'Bhiwandi', lat: 19.3000, lon: 73.0500 },
-  { name: 'Aurangabad', lat: 19.8762, lon: 75.3433 },
   { name: 'Mira-Bhayandar', lat: 19.3003, lon: 72.8411 },
   { name: 'Navi Mumbai', lat: 19.0445, lon: 73.0130 },
   { name: 'Vasai-Virar', lat: 19.3642, lon: 72.8347 },
+
+  { name: 'Palam', lat: 28.5901, lon: 77.0888 },
+  { name: 'Jintur', lat: 19.6087, lon: 76.6846 },
+  { name: 'Gangakhed', lat: 18.9664, lon: 76.7481 },
+  { name: 'Manwat', lat: 19.3061, lon: 76.4968 },
+  { name: 'Pathri', lat: 19.2632, lon: 76.4303 },
+  { name: 'Purna', lat: 19.1790, lon: 77.0305 },
+  { name: 'Sonpeth', lat: 19.0267, lon: 76.4592 },
+  
 ];
 
 export default citiesInMaharashtra;
